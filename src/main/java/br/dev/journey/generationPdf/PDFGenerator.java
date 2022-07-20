@@ -106,9 +106,9 @@ public class PDFGenerator {
             System.out.println("bitMatrix width....: " + bitMatrix.getWidth());
             System.out.println("bitMatrix height...: " + bitMatrix.getHeight());
 
-            bitMatrix = qrCodeWriter.encode("25584523365542144587745552121455522200002556632221444000221441755214221254477", BarcodeFormat.QR_CODE, width, height);
+            //bitMatrix = qrCodeWriter.encode("25584523365542144587745552121455522200002556632221444000221441755214221254477", BarcodeFormat.QR_CODE, width, height);
             // bitMatrix = qrCodeWriter.encode("02547552114171221212008765434156554432310000098765644343455564443321345667777", BarcodeFormat.QR_CODE, width, height);
-            //bitMatrix = qrCodeWriter.encode("QRCode do zé lezin é assim", BarcodeFormat.QR_CODE, width, height);
+            bitMatrix = qrCodeWriter.encode("QRCode do Nivaldo Aparecido Alexandre Hydalgo", BarcodeFormat.QR_CODE, width, height);
             //bitMatrix = qrCodeWriter.encode("My QRCode", BarcodeFormat.QR_CODE, width, height);
             //bitMatrix.setRegion(20, 20, width, height);
             System.out.println("bitMatrix width....: " + bitMatrix.getWidth());
