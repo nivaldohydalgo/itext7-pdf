@@ -2,7 +2,7 @@ package br.dev.journey.services;
 
 import javax.enterprise.context.ApplicationScoped;
 
-import br.dev.journey.generationPdf.PDFGenerator2;
+import br.dev.journey.generationPdf.OpenPDF;
 
 import java.io.ByteArrayInputStream;
 
@@ -10,7 +10,7 @@ import java.io.ByteArrayInputStream;
 public class GenerationPdfService {
     
     public ByteArrayInputStream loadPDF() throws Exception {
-        ByteArrayInputStream pdf = PDFGenerator2.GeneratorPDF();
+        ByteArrayInputStream pdf = OpenPDF.GeneratorPDF();
         return pdf;
     }
 

@@ -12,7 +12,7 @@ import javax.ws.rs.core.Response;
 import br.dev.journey.services.GenerationPdfService;
 
 
-@Path("/generate")
+@Path("/pdf")
 public class GenerationPdfResource {
 
     @Inject
