@@ -54,10 +54,7 @@ public class OpenPDF {
 
     public static ByteArrayInputStream GeneratorPDF() {
 
-        // Tamanho da Pagina
-        Rectangle pageSize;
-
-        // Margens Gerais
+        /*** Margens Gerais do Documento ***/
         Float marginLeft = 50f;
         Float marginRight = 40f;
         Float marginTop = 40f;
@@ -65,21 +62,30 @@ public class OpenPDF {
 
         // Altura e largura do texto do Header
         Float widthHeader = 420f;
-        Float heightHeader = 100f;
+        Float heightHeader = 80f; // Obs.: Estah eh a altura minima, mas pode ser aumentada conforme a quantidade
+                                   // de linhas do cabecalho
+        int leadingHeader = 16;
+        int sizeFontHeader = 12;
+        Font fontHeader = FontFactory.getFont(FontFactory.HELVETICA, sizeFontHeader, Font.BOLD);
 
         // Altura do Footer
         Float heightFooter = 20f;
 
         // Margens Top e Bottom da area do texto do documento
-        Float textMarginTop = marginTop + heightHeader + 10f;
-        Float textMarginBottom = marginBottom + heightFooter + 10f;
+        Float textMarginTop;
+        Float textMarginBottom;
 
         // Tamanho do QRCode
         int sizeQRCode = 100;
-        int marginQRCode = 30;
+        int marginQRCode = 20; // Obs.: Margem para ajusta da posição horizontal e vertical do QRCode
 
+        // Textos FAKE
         String text = "There are many variations of passages of Lorem Ipsum available, but the majority have suffered alteration in some form, by injected humour, or randomised words which don't look even slightly believable. If you are going to use a passage of Lorem Ipsum, you need to be sure there isn't anything embarrassing hidden in the middle of text. All the Lorem Ipsum generators on the Internet tend to repeat predefined chunks as necessary, making this the first true generator on the Internet. It uses a dictionary of over 200 Latin words, combined with a handful of model sentence structures, to generate Lorem Ipsum which looks reasonable. The generated Lorem Ipsum is therefore always free from repetition, injected humour, or non-characteristic words etc.";
         String text2 = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.";
+        // Texto do Cabecalho
+        String textHeader = "CONTRATO DE FINANCIAMENTO IMOBILIARIO COM RECURSOS DO SISTEMA FINANCEIRO HABITACIONAL-SFH FIRMADO ENTRE O BANCO DO BRASIL S/A E JOAO SILVA, EM 01/02/2022 NA CIDADE DE AGUAS CLARAS NO DISTRITO FEDERAL, COM REGISTRO NO SEGUNDO CARTORIO DE AVERBACAO DE DOCUMENTOS";
+        textHeader = textHeader
+                + " SITUADO A AVENIDA DAS ARAUCARIAS, N. 3210, DE ACORDO COM O DECRETO DA CAMARA LEGISLATIVA DO DISTRITO FEDERAL";
 
         // OutputStream de saida contendo o PDF gerado
         ByteArrayOutputStream saida = new ByteArrayOutputStream();
@@ -90,11 +96,22 @@ public class OpenPDF {
             /* == GERACAO DO PDF COM O TEXTO DO DOCUMENTO == */
             /* =========================================================== */
 
+            // ****** VERIFICA A ALTURA DO TEXTO DO CABECALHO ******/
+            Float wh = getHeightHeader(textHeader, widthHeader, leadingHeader, fontHeader);
+            if (wh > heightHeader) { heightHeader = wh; }
+            System.out.println("wh..............: " + wh);
+
+            textMarginTop = marginTop + heightHeader + 6f;
+            textMarginBottom = marginBottom + heightFooter + 12f;
+
             // Prepara o documento para geração
             Document documento = new Document(PageSize.A4, marginLeft, marginRight, textMarginTop, textMarginBottom);
             PdfWriter.getInstance(documento, saida);
             documento.open();
-            pageSize = documento.getPageSize();
+            Rectangle pageSize = documento.getPageSize();
+
+            textMarginTop = marginTop + heightHeader + 10f;
+            documento.setMargins(marginLeft, marginRight, textMarginTop, textMarginBottom);
 
             Font fonteParagrafo = FontFactory.getFont(FontFactory.HELVETICA, 12, Font.NORMAL);
             Paragraph p1 = new Paragraph(text, fonteParagrafo);
@@ -146,19 +163,24 @@ public class OpenPDF {
                 PdfContentByte paginaAtual = stamp.getUnderContent(numeroPagina);
 
                 // Inclui o texto do Header
-                String contrato = "CONTRATO DE FINANCIAMENTO IMOBILIARIO COM RECURSOS DO SISTEMA FINANCEIRO HABITACIONAL-SFH FIRMADO ENTRE O BANCO DO BRASIL S/A E JOAO SILVA, EM 01/02/2022 NA CIDADE DE AGUAS CLARAS NO DISTRITO FEDERAL, COM REGISTRO NO SEGUNDO CARTORIO DE AVERBACAO DE DOCUMENTOS";
-                Phrase frase = new Phrase(contrato, FontFactory.getFont(FontFactory.HELVETICA, 12, Font.BOLD));
-                ColumnText ct = new ColumnText(paginaAtual);
+                Phrase frase = new Phrase(textHeader, fontHeader);
                 Paragraph para = new Paragraph(frase);
                 para.setAlignment(Element.ALIGN_JUSTIFIED);
-                para.setLeading(16);
+                para.setLeading(leadingHeader);
+                ColumnText ct = new ColumnText(paginaAtual);
                 ct.addElement(para); // <- some filler text from constant
                 ct.setSimpleColumn(
                         marginLeft,
                         pageSize.getTop() - marginTop - heightHeader,
                         marginLeft + widthHeader,
                         pageSize.getTop() - marginTop);
+                System.out.println("ct.getFilledWidth: " + ct.getFilledWidth());
+                System.out.println("ct.getLinesWritten: " + ct.getLinesWritten());
+                System.out.println("ct.getLinesWritten: " + ct.getWidth(frase));
+
                 ct.go();
+                System.out.println("ct.getFilledWidth: " + ct.getFilledWidth());
+                System.out.println("ct.getLinesWritten: " + ct.getLinesWritten());
 
                 // Inclui o QRCode
                 QRCodeWriter qrCodeWriter = new QRCodeWriter();
@@ -168,11 +190,18 @@ public class OpenPDF {
                 bitMatrix = qrCodeWriter.encode(formatQRCode, BarcodeFormat.QR_CODE, sizeQRCode, sizeQRCode);
                 ByteArrayOutputStream pngOutputStream = new ByteArrayOutputStream();
                 MatrixToImageWriter.writeToStream(bitMatrix, "PNG", pngOutputStream);
+
+                System.out.println("size: " + pngOutputStream.size());
+
                 byte[] pngData = pngOutputStream.toByteArray();
                 Image qrCode = Image.getInstance(pngData);
+                System.out.println("qrCode.getHeight...: " + qrCode.getHeight());
+                System.out.println("qrCode.getWidth....:" + qrCode.getWidth());
                 qrCode.setAbsolutePosition(pageSize.getWidth() - marginRight - sizeQRCode + marginQRCode,
                         pageSize.getTop() - marginTop - sizeQRCode + marginQRCode);
-                paginaAtual.addImage(qrCode);
+                paginaAtual.addImage(qrCode, 100, 0, 0, 100,
+                        pageSize.getWidth() - marginRight - sizeQRCode + marginQRCode,
+                        pageSize.getTop() - marginTop - sizeQRCode + marginQRCode);
 
                 // Line Separator
                 LineSeparator lineSeparator = new LineSeparator();
@@ -211,7 +240,6 @@ public class OpenPDF {
                 paginaAtual.showTextAligned(Element.ALIGN_LEFT, "VIA  NÃO  NEGOCIAVEL", 200, 160, 60);
                 paginaAtual.endText();
 
-
             }
 
             stamp.close();
@@ -222,6 +250,37 @@ public class OpenPDF {
         }
 
         return new ByteArrayInputStream(saida.toByteArray());
+    }
+
+    private static Float getHeightHeader(String t, Float w, int l, Font ft) {
+
+        ByteArrayOutputStream s = new ByteArrayOutputStream();
+        Document d = new Document(PageSize.A4, 20, 20, 20, 20);
+        PdfWriter pw = PdfWriter.getInstance(d, s);
+        Rectangle ps = d.getPageSize();
+        d.open();
+
+        Phrase ph = new Phrase(t, ft);
+        Paragraph pah = new Paragraph(ph);
+        pah.setAlignment(Element.ALIGN_JUSTIFIED);
+        pah.setLeading(l);
+
+        PdfContentByte pcb = pw.getDirectContent();
+        ColumnText ct = new ColumnText(pcb);
+        ct.addElement(pah); // <- some filler text from constant
+        ct.setSimpleColumn(
+                20,
+                500,
+                20 + w,
+                ps.getTop() - 20);
+        ct.go();
+        System.out.println("Qtde linhas HEADER calculada: " + ct.getLinesWritten());
+        Float result = (float) (ct.getLinesWritten() * l) + 6;
+
+        d.close();
+        pw.close();
+        s.reset();
+        return result;
     }
 
 }
